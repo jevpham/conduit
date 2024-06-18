@@ -6,8 +6,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User  # Specifies the model to serialize
         fields = '__all__'  # Includes all fields of the User model
 
-class NoteSerializer(serializers.ModelSerializer):
+class ArticleSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Note  # Specifies the model to serialize
+        model = Article  # Specifies the model to serialize
         fields = '__all__'  # Includes all fields of the Note model
-
