@@ -2,7 +2,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 # User model
-class User(AbstractUser):
+# class User(AbstractUser):
+class User(models.Model):
     # Field to store the user's name, maximum length allowed is 100 characters
     name = models.CharField(max_length=100)
     # Field to store the user's email, must be a valid email format, required on create
