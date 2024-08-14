@@ -24,6 +24,8 @@ class User(models.Model):
     #     ]
     # )
 
+    # Field to store the user's phone number, maximum length allowed is 15 characters
+    phone = models.CharField(max_length=15, blank=True, null=True)
     # Field to store the timestamp when the user record was created, automatically set to the current date and time when the user is created
     created_at = models.DateTimeField(auto_now_add=True)
     # Field to store the timestamp of the last update to the user record, automatically set to the current date and time whenever the user record is updated
