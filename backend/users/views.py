@@ -51,3 +51,10 @@ class LoginUserView(generics.GenericAPIView):
             return Response({'token': token.key}, status=status.HTTP_200_OK)
         # Return the response with an error message and status code
         return Response({'error': 'Invalid Credentials'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # def get(self, request):
+    #     return Response({'message': 'Hello, World!'})
+    
+    # def put(self, request):
+    #     return Response({'message': 'Hello, World!'})
+    
