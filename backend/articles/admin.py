@@ -1,6 +1,7 @@
 from django.contrib import admin
-from articles.models import Article, Tag    
-# Register your models here.
+
+from articles.models import Tag, Article
+
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):

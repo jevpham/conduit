@@ -1,17 +1,59 @@
 from rest_framework import serializers
-from .models import *
+from rest_framework.validators import UniqueValidator
+
+from users.models import User
+
+
+class UserUniqueValidator(UniqueValidator):
+    def __init__(self, field):
+        super().__init__(
+            queryset=User.objects.all(),
+            message=f"A user with that {field} already exists.",
+        )
+
 
 class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        # Specifies the model to serialize
-        model = User 
-        # Includes all fields of the User model
-        fields = '__all__'  
-        # Ensures the password field is write-only
-        extra_kwargs = {'password': {'write_only': True}}  
-
     def create(self, validated_data):
-        # Create a new user instance using the validated data
-        user = User.objects.create_user(**validated_data) 
-        # Return the created user instance
-        return user 
+        return User.objects.create_user(**validated_data)
+
+    def update(self, instance, validated_data):
+        super().update(instance, validated_data)
+        if password := validated_data.get("password"):
+            instance.set_password(password)
+            instance.save()
+        return instance
+
+    class Meta:
+        model = User
+        read_only_fields = ["token"]
+        fields = ["token", "bio", "image", "username", "email", "password"]
+        extra_kwargs = {
+            "password": {"write_only": True},
+            "email": {"validators": [UserUniqueValidator("email")]},
+            "username": {"validators": [UserUniqueValidator("username")]},
+        }
+
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField()
+
+    def validate(self, attrs):
+        user = User.objects.filter(email=attrs["email"]).first()
+        if user is None or not user.check_password(attrs["password"]):
+            raise serializers.ValidationError("Invalid email or password")
+        self.context["user"] = user
+        return attrs
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    following = serializers.SerializerMethodField()
+
+    def get_following(self, user):
+        if self.context["request"].user.is_anonymous:
+            return False
+        return self.context["request"].user.is_following(user)
+
+    class Meta:
+        model = User
+        fields = ["username", "email", "bio", "image", "following"]

@@ -1,5 +1,5 @@
 """
-URL configuration for config project.
+URL configuration for backend project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.0/topics/http/urls/
@@ -14,15 +14,32 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
-from django.urls import path, include
-from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+from django.urls import path, include, re_path
+from django.views.generic import TemplateView
+from rest_framework.routers import DefaultRouter
+from rest_framework_nested.routers import NestedSimpleRouter
+
+from articles.views import ArticleViewSet, TagListView, CommentViewSet
+from users.views import UserViewSet, UserView, ProfileViewSet
+
+router = DefaultRouter(trailing_slash=False)
+router.register("users", UserViewSet, basename="users")
+router.register("profiles", ProfileViewSet, basename="profiles")
+router.register("articles", ArticleViewSet, basename="articles")
+article_router = NestedSimpleRouter(router, r"articles", lookup="article")
+article_router.register(
+    "comments", CommentViewSet, basename="article-comments"
+)
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    # path('api/', include('users.urls')),  # Include your app's URLs
-    # path('api/', include('articles.urls')),  # Include your app's URLs
-    # path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    # path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    # path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    path("admin/", admin.site.urls),
+    # APIs
+    path("api/", include(router.urls)),
+    path("api/", include(article_router.urls)),
+    path("api/user", UserView.as_view(), name="user"),
+    path("api/tags", TagListView.as_view(), name="tags-list"),
+    # Frontend
+    re_path(r"^(?:.*)$", TemplateView.as_view(template_name="index.html")),
 ]

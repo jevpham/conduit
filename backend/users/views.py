@@ -1,60 +1,69 @@
-from django.shortcuts import render
-from django.contrib.auth import authenticate
-from rest_framework import generics
-from rest_framework.decorators import api_view
-from rest_framework.authtoken.models import Token
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework import status
+from rest_framework import viewsets, views
+from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.mixins import RetrieveModelMixin
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from .models import *
-from .serializers import *
 
-class RegisterUserView(generics.CreateAPIView):
-    # Define the queryset to be used for this view
-    queryset = User.objects.all()
-    # Specify the serializer class to be used
+from users.models import User
+from users.serializers import (
+    UserSerializer,
+    LoginSerializer,
+    ProfileSerializer,
+)
+from utils.mixins import CreateModelMixin
+
+
+class UserViewSet(CreateModelMixin, viewsets.GenericViewSet):
+    object_name = "user"
     serializer_class = UserSerializer
-    # Allow any user to access this view
-    permission_classes = [AllowAny]
 
-    def create(self, request):
-        # Get the serializer with the request data
-        serializer = self.get_serializer(data=request.data)
-        # Validate the serializer data
+    @action(detail=False, methods=["post"])
+    def login(self, request):
+        data = request.data.get(self.object_name, {})
+        serializer = LoginSerializer(data=data)
         serializer.is_valid(raise_exception=True)
-        # Save the user instance
-        user = serializer.save()
-        # Create or get the token for the user
-        token, created = Token.objects.get_or_create(user=user)
-        # Get the success headers
-        headers = self.get_success_headers(serializer.data)
-        # Return the response with the token and status code
-        return Response({'token': token.key}, status=status.HTTP_201_CREATED, headers=headers)
+        user = serializer.context["user"]
 
-class LoginUserView(generics.GenericAPIView):
-    # Specify the serializer class to be used
+        return Response(UserSerializer(user).data)
+
+
+class UserView(views.APIView):
+    object_name = "user"
+    permission_classes = (IsAuthenticated,)
     serializer_class = UserSerializer
-    # Require the user to be authenticated to access this view
-    permission_classes = [IsAuthenticated]
 
-    def post(self, request):
-        # Get the email and password from the request data
-        email = request.data.get('email')
-        password = request.data.get('password')
-        # Authenticate the user
-        user = authenticate(request, email=email, password=password)
+    def get(self, request, *args, **kwargs):
+        serializer = UserSerializer(self.request.user)
+        return Response(serializer.data)
 
-        if user is not None:
-            # Create or get the token for the user
-            token, created = Token.objects.get_or_create(user=user)
-            # Return the response with the token and status code
-            return Response({'token': token.key}, status=status.HTTP_200_OK)
-        # Return the response with an error message and status code
-        return Response({'error': 'Invalid Credentials'}, status=status.HTTP_400_BAD_REQUEST)
-    
-    # def get(self, request):
-    #     return Response({'message': 'Hello, World!'})
-    
-    # def put(self, request):
-    #     return Response({'message': 'Hello, World!'})
-    
+    def put(self, request, *args, **kwargs):
+        data = request.data.get(self.object_name, {})
+        serializer = UserSerializer(self.request.user, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+
+class ProfileViewSet(RetrieveModelMixin, viewsets.GenericViewSet):
+    object_name = "profile"
+    lookup_url_kwarg = "username"
+    lookup_field = "username"
+    serializer_class = ProfileSerializer
+
+    def get_queryset(self):
+        queryset = User.objects.all()
+        if self.action == "follow":
+            return queryset.exclude(pk=self.request.user.pk)
+        return queryset
+
+    @action(detail=True, methods=["POST", "DELETE"])
+    def follow(self, request, username=None):
+        if request.user.is_anonymous:
+            raise PermissionDenied()
+        user = self.get_object()
+        if request.method == "DELETE":  # Unfollow
+            request.user.following.remove(user)
+        else:  # Follow
+            request.user.following.add(user)
+        return Response(self.get_serializer(user).data)
