@@ -84,10 +84,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "config.wsgi.app"
+WSGI_APPLICATION = "config.wsgi.application"
 STATIC_URL = "static/"
-# STATICFILES_DIRS = os.path.join(BASE_DIR, "static"),
-# STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles_build","static")
 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_URLS_REGEX = r"^/api/.*$"
