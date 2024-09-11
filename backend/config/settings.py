@@ -85,6 +85,9 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "config.wsgi.application"
+STATIC_URL = "static/"
+STATICFILES_DIRS = os.path.join(BASE_DIR, "static"),
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles_build","static")
 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_URLS_REGEX = r"^/api/.*$"
@@ -139,8 +142,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = "static/"
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# STATIC_URL = "static/"
+# STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [ANGULAR_DIR]
 
 # Vercel-specific settings
