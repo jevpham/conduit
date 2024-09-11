@@ -5,8 +5,7 @@
             "use": "@vercel/python",
             "config": {
                 "maxLambdaSize": "15mb",
-                "runtime": "python3.12",
-                "pip": ["django", "-r backend/requirements.txt"]
+                "runtime": "python3.12"
             }
         }
     ],
