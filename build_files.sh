@@ -1,2 +1,2 @@
-pip install -r requirements.txt
-python manage.py collectstatic
+pip install -r backend/requirements.txt
+python backend/manage.py collectstatic
